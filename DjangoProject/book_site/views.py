@@ -15,7 +15,8 @@ def search_by_book_title(request: HttpRequest) -> HttpResponse:
         return HttpResponseBadRequest(JsonResponse("Title parameter is required"))
 
     books = Book.objects.filter(title__icontains=title)
-    return HttpResponse(__format_books__(books))
+    obj = {"content": __format_books__(books)}
+    return HttpResponse(JsonResponse(obj))
 
 
 @csrf_exempt
@@ -31,7 +32,8 @@ def search_by_author(request: HttpRequest) -> HttpResponse:
         return HttpResponse(JsonResponse("There is no such author: " + first_name + ' ' + last_name))
 
     books = Book.objects.filter(author_id=author.id)
-    return HttpResponse(__format_books__(books))
+    obj = {"content": __format_books__(books)}
+    return HttpResponse(JsonResponse(obj))
 
 
 @csrf_exempt
@@ -43,8 +45,12 @@ def create_new_author(request: HttpRequest) -> HttpResponse:
     birth_date = body.get('birth_date')
     death_date = body.get('death_date')
 
-    if first_name is None or last_name is None or birth_date is None:
-        return HttpResponseBadRequest(JsonResponse("Missing important fields"))
+    if first_name is None:
+        return HttpResponseBadRequest(JsonResponse("Missing first_name"))
+    elif last_name is None:
+        return HttpResponseBadRequest(JsonResponse("Missing last_name"))
+    elif birth_date is None:
+        return HttpResponseBadRequest(JsonResponse("Missing birth_date"))
 
     author = Author.objects.create(
         first_name=first_name,
@@ -82,17 +88,27 @@ def create_new_book(request: HttpRequest) -> HttpResponse:
     return HttpResponse(JsonResponse({"id": str(book.id)}))
 
 
-def __format_books__(books) -> JsonResponse:
+def get_all(request: HttpRequest) -> HttpResponse:
+    return HttpResponse(
+        JsonResponse({
+            "authors": __format_authors__(Author.objects.all()),
+            "books": __format_books__(Book.objects.all())
+        })
+    )
+
+
+def __format_books__(books):
     data = []
     for book in books:
-        json_obj = {
-            "id": str(book.id),
-            "title": book.title,
-            "author": str(book.author),
-            "publication_date": str(book.publication_date)
-        }
-        data.append(json_obj)
-    return JsonResponse({"content": data})
+        data.append(book.to_json())
+    return data
+
+
+def __format_authors__(authors):
+    data = []
+    for author in authors:
+        data.append(author.to_json())
+    return data
 
 
 def __get_request_body__(request: HttpRequest):
