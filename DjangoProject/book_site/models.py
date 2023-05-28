@@ -4,7 +4,6 @@ from django.db import models
 
 
 class Author(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4(), editable=False, unique=True)
     first_name = models.CharField(null=False, max_length=100)
     last_name = models.CharField(null=False, max_length=100)
     birth_date = models.DateField(null=False)
@@ -30,7 +29,6 @@ class Author(models.Model):
 
 
 class Book(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4(), editable=False, unique=True)
     title = models.CharField(null=False, max_length=100)
     author = models.ForeignKey(null=False, to=Author, on_delete=models.CASCADE)
     publication_date = models.DateField(null=False)
